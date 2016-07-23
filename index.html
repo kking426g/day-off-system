@@ -1,0 +1,411 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<title>GAMMA小天地</title>
+<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.form.min.js"></script>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/static/index.js"></script>
+<script type="text/javascript" src="https://dl.dropboxusercontent.com/u/72882832/jquery-ui.js"></script>
+<script type="text/javascript" src="/static/js/jquery-ui-timepicker-addon.js"></script>
+<script type="text/javascript" src="/static/js/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="/static/js/ckeditor/adapters/jquery.js"></script>
+<script type="text/javascript" src="/static/js/ckfinder/ckfinder.js"></script>
+<script type="text/javascript" src="/static/js/jquery.backgroundPosition.js"></script>
+<script type="text/javascript" src="/static/js/jquery.datetimepicker.full.js"></script>
+<script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="/static/js/fileinput.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/fileinput.css" />
+<link rel="stylesheet" type="text/css" href="/static/css/jquery.datetimepicker.css" />
+<link rel="stylesheet" type="text/css" href="/static/js/ckeditor/skins/moono/editor.css" /> 
+<link rel="stylesheet" type="text/css" href="https://dl.dropboxusercontent.com/u/72882832/jquery-ui-timepicker-addon.css" />
+<link rel="stylesheet" type="text/css" href="https://dl.dropboxusercontent.com/u/72882832/jquery-ui.css" />
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<style type="text/css">
+	ul, li {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.slideshow {
+		position: relative;
+		height: 400px;
+		width: 600px;
+		float: left;
+		margin: 0 10px;
+		border: 3px solid #ddd;
+	}
+	.slideshow li {
+		position: absolute;
+	}
+	.slideshow a img{
+		display: block;
+		padding: 0;
+		margin: 0 auto;
+		border: none;
+	}
+	.slideshow li a{
+		display: block;
+	}
+	.slideshowController {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+	}
+	.slideshowController a {
+		background: transparent url('../static/arrows.png') no-repeat left top;
+		display: block;
+		width: 30px;
+		height: 30px;
+		position: absolute;
+		right: 60px;
+		bottom: 0;
+		z-index: 9999;
+		outline: none;	/* 去除超連結虛線 */
+	}
+	.slideshowController .next{
+		background-position: -30px 0;
+		right: 0;
+	}
+	.slideshowController .play{
+		background-position: -60px 0;
+		right: 30px;
+	}
+	.slideshowController .pause{
+		background-position: -90px 0;
+	}
+</style>
+</head>
+
+<body>
+
+	<!-- 登入 --> 
+	<div id="logindiv" align="center">
+		<div class="logo"><H1> <a> GammaTechnology </a></H1></div>
+		<form id="myForm" name="myForm">
+			<h3> 帳號 <input placeholder="Account" class="input-block-level" type="text" id="account" onkeyup="value=value.replace(/[^a-zA-Z.\d]/g,'')" /> </h3>
+			<h3> 密碼 <input class="input-block-level" placeholder="Password" type="password" id="password" /></h3>
+			<input class="btn btn-info" type="button" id="login" value="登入" />
+			<input class="btn btn-info" type="reset" value="重填" />
+		</form>
+  </div>
+  
+<!-- 導行列 -->
+<nav id="menu" class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                        
+      </button>
+      <a class="navbar-brand">GammaTechnology</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li id="menuboard"><a> Bulletin Board </a></li>
+        <li id="menutravel"><a> Travel News </a></li>
+        <li id="picture"><a> Albums </a></li>
+        <li id="dayoff"><a> Day Off </a></li>
+        <li id="changepwd"><a> Setting </a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+      	<li><a href="javascript:window.location.reload()"><span class="glyphicon glyphicon-user"></span> Sign out</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+	<!-- 資訊顯示區域 --> 
+	<div id="content">
+
+		<!--請假頁面開始-->
+		<div id='leavetabs'>
+			<ul class="nav nav-tabs">
+				<li class="active" id="leavereocrd"><a> 請假記錄 </a></li>
+ 			  <li id="leavebuttom"><a> 請假 </a></li>
+ 			  <li id="verify"><a> 審核 </a></li>
+ 			</ul>
+ 		</div>
+		<div id="leavepage">
+			<h3 align="center"><strong> 填寫假單 </strong></h3>
+			<table width="200" border="1" align="center">
+				<tr>
+					<td>
+						<H4> 假別：</H4>
+						<select name="select" id="selecttype">
+							<option selected="selected"> 病假 </option>
+							<option> 事假</option>
+							<option> 年假</option>
+							<option> 產假</option>
+							<option> 婚假</option>
+							<option> 公假</option>
+							<option> 喪假</option>
+							<option> 育嬰假</option>
+							<option> 生理假</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<H4> 時間： </H4>
+						<p> 開始時間 </p>
+						<input id="datetimepicker1" type="text" />
+						<select id="starthour" class="timehour">
+							<option>09</option>
+							<option>10</option>
+							<option>11</option>
+							<option>12</option>
+							<option>13</option>
+							<option>14</option>
+							<option>15</option>
+							<option>16</option>
+							<option>17</option>
+							<option>18</option>
+						</select>
+						<select id="startmin" class="timemin">
+							<option>00</option>
+							<option>15</option>
+							<option>30</option>
+							<option>45</option>
+						</select>
+						<p> 結束時間 </p>
+						<input id="datetimepicker2" type="text" />
+						<select id="endhour" class="timehour">
+							<option>09</option>
+							<option>10</option>
+							<option>11</option>
+							<option>12</option>
+							<option>13</option>
+							<option>14</option>
+							<option>15</option>
+							<option>16</option>
+							<option>17</option>
+							<option>18</option>
+						</select>
+						<select id="endmin" class="timemin">
+							<option>00</option>
+							<option>15</option>
+							<option>30</option>
+							<option>45</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<H4> 假由：</H4>
+						<p>
+							<textarea name="textarea" id="leavetext" cols="45" rows="5"></textarea>
+						</p>
+					</td>
+				</tr>
+			</table>
+			<p>&nbsp;</p>
+			<p align="center">
+				<input class="btn btn-info" type="submit" id="leave_submit" value="送出假單"></span> </input>
+				<input class="btn btn-info" type="submit" id="annual" value="計算時數" />
+				<div align="center" id="leftime">
+				</div>
+			</p>
+		</div>
+		
+		<!--請假頁面結束-->
+
+		<!-- 請假記錄 --> 
+		<div id="employee_leave_search">
+			<div id="showid"></div>
+			<h3 align="center"><strong> 請假記錄</strong></h3>
+			<table id="employee_leave_search1" class="table table-hover">
+				<tr id="leavetitle">
+					<td>
+						<p align="center" style="font-weight:bolder;"> 假別 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 開始日期 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 結束日期 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 開始時間 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 結束時間 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 休假時數 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 理由 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 審核結果 </p>
+					</td>
+				</tr>
+			</table>
+		</div>
+		
+		<!-- 請假記錄 --> 
+	
+    <!--審核開始--->
+    <div id="verifypage" align="center">
+    	<h3><strong> 審核記錄</strong></h3>
+      <table id="verifytable" class="table table-hover">
+        <tr id="verifytr1">
+          <td style="width:auto;">
+            <div align="center" style="font-weight:bolder;"> 請假編號</div>
+          </td>
+          <td style="width:auto;">
+            <div align="center" style="font-weight:bolder;"> 姓名</div>
+          </td>
+          <td style="width:auto;">
+            <div align="center" style="font-weight:bolder;"> 假別</div>
+          </td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 開始日期</p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 結束日期</p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 開始時間 </p>
+					</td>
+					<td>
+						<p align="center" style="font-weight:bolder;"> 結束時間 </p>
+					</td>
+          <td style="width:auto;">
+            <div align="center" style="font-weight:bolder;"> 休假時數</div>
+          </td>
+          <td style="width:auto;">
+            <div align="center" style="font-weight:bolder;"> 假由</div>
+          </td>
+          <td style="width:auto;">
+            <div style="font-weight:bolder; align:center;"> 審核 </div>
+          </td>
+        </tr>
+      </table>
+      <label>
+      	<input class="btn btn-info" align="center" id="verifybutton" type="submit" value="送出" />
+      </label>
+    </div>
+    
+     <!--審核結束--->
+	
+		<!-- 公告欄 --> 
+		<div id="board" align="center">
+			<strong><h1><font color="#cc0066">Gamma公告欄:</font></h1></strong>
+			<table class="table table-bordered" id="tbBulletin">
+				<tr>
+					<td align="center" bgcolor="#ff80bf"><span class="style14">編號</span></td>
+					<td align="center" bgcolor="#ff80bf"><span class="style14">發布日期</span></td>
+					<td align="center" bgcolor="#ff80bf"><span class="style14">主旨</span></td>
+					<td align="center" bgcolor="#ff80bf"><span class="style14">內容</span></td>
+					<td align="center" bgcolor="#ff80bf"><span class="style14">公告人</span></td>
+					<td align="center" bgcolor="#ff80bf"><span class="style14">內部流水號</span></td>
+				</tr>
+			</table>
+			<button id="add_board" type="button" class="btn btn-info">加入</button>		
+			<button id="del_board" type="button" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-trash"></span> 刪除內部流水號</button>
+			
+			<input id="del_number" placeholder="請輸入內部流水編號" class="input-block-level" type="text" size="20" onkeyup="value=value.replace(/[^\d]/g,'') " />
+			<p>&nbsp;</p>
+		</div>
+
+		<!-- 新增公告欄 --> 
+		<div id="board_edit" align="center">
+			<strong><h1><font color="#FF0000">Gamma公告欄:</font></h1></strong>
+			<p id="board_date" ></p>
+			<H4> 主旨 </H4>
+			<input type="text" id="subject" value="" size="45" /> 
+			<H4> 內容 </H4>
+			<textarea id="substance" cols="80" rows="10" name="substance" ></textarea>
+			<H4> 公告人 </H4>
+			<select id="publisher">
+				<option selected="selected">Catherine</option>
+				<option>Nelson</option>
+			</select>
+			<p>&nbsp;</p>
+			<button id="board_submit" type="button" class="btn btn-success">送出</button>
+			<button id="board_cancel" type="button" class="btn btn-success">取消</button>
+		</div>	
+
+		<!--花絮--> 
+		<div id="gallery" width=calc(100% - 150px);>
+			<input class="btn btn-secondary" type="submit" id="addfloder" name="" value="新增活動資料夾"/>
+			<input type="text" id="activitytext" name=""/>
+			<input class="btn btn-secondary" type="submit" id="addactivity" name="" value="新增"/>
+			<p>&nbsp;</p>
+			<form id="uploadForm" enctype="multipart/form-data" action="/api/photo" method="post">
+			   <input type="file" name="userPhoto" id="imagename" class="file-loading"  data-show-preview="false" />
+			   <span id = "status"></span>
+			</form>
+			<p>&nbsp;</p>
+			<div class="container" id="folderlist"></div> 
+			<hr size="8px" align="center" width="100%">
+			<div id="picture_show" class="slideshow autoPlay">   <!-- 照片播放器-->
+				<ul ><li id='put_p'></li></ul>
+			</div>
+			<hr size="8px" align="center" width="100%">	 
+			<div id="piccontent" style="padding: 5px; left: 5px;"></div><!-- 顯示所有照片-->	
+		</div>	
+
+		<!--更改密碼--> 
+		<div id="chpwd" align="center">
+			<h3><strong>更改密碼</strong></h3>
+			<table width="415" border="1">
+				<div id="emp_photo" style="padding: 5px; left: 5px;"></div>			
+				<form id="up_emphoto" enctype="multipart/form-data" action="/api/picture" method="post">
+					<input type="file" name="empPhoto" id="idPhoto"/>更換照片 
+					<input type="submit" value="Upload Image" name="submit_1"/>
+					<span id = "status_1"></span>
+				</form>
+				<tr>
+					<th width="167" scope="col" class="col-sm-4" style="background-color:lavender;">員工編號</th>
+					<th width="232" scope="col" id="emp_id" class="col-sm-4" style="background-color:lavenderblush;"></th>
+				</tr>
+				<tr>
+					<th scope="row" class="col-sm-4" style="background-color:lavender;">姓名</th>
+					<th width="232" scope="col" id="emp_name" class="col-sm-4" style="background-color:lavenderblush;"></th>
+				</tr>
+				<tr>
+					<th scope="row" class="col-sm-4" style="background-color:lavender;">電話 <span class="glyphicon glyphicon-earphone"></span></th>
+					<th width="232" scope="col" id="emp_phone" class="col-sm-4" style="background-color:lavenderblush;"></th>
+				</tr>
+				<tr>
+					<th scope="row" class="col-sm-4" style="background-color:lavender;">mail</th>
+					<th width="232" scope="col" id="emp_mail" class="col-sm-4" style="background-color:lavenderblush;"></th>
+				</tr>
+				<tr>
+					<th scope="row" class="col-sm-4" style="background-color:lavender;">當前密碼</th>
+					<th><input type="password" id="oldpwd"/></th>
+				</tr>
+				<tr>
+					<th scope="row" class="col-sm-4" style="background-color:lavender;">新密碼</th>
+					<th><input type="password" id="newpwd"/></th>
+				</tr>
+				<tr>
+					<th scope="row" class="col-sm-4" style="background-color:lavender;">新密碼再確認</th>
+					<th><input type="password" id="newpwd_confirm"/></th>
+				</tr>
+			</table>
+			<p>&nbsp;</p>
+			<button id="chpwd_submit" type="button" class="btn btn-success">更改</button>
+			<button id="cancel_chpwd" type="button" class="btn btn-success">取消</button>
+			<p>&nbsp;</p>
+		</div>
+
+		<div id="travel"> 
+			<td>
+				<iframe src="https://docs.google.com/forms/d/1qqR0YeoUOjsWJcaYZSOxuqXmYRguQu-a9pG63LoQknk/viewform?embedded=true" width="600" height="500" frameborder="0" marginheight="0" marginwidth="0">Loading...</iframe>
+			</td>
+		</div>
+
+	</div>
+
+</body>
+</html>
